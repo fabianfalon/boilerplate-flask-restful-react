@@ -2,4 +2,6 @@ env/
 *.pyc
 api/settings/production.py
 api/settings/production_on
-migrations/
+
+env
+htmlcov
