@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+# vim: set syntax=python:
+
+""" Git hook to insert a commit message marker.
+This hook is specific to the Psignifit-3.x project. It will insert an
+appropriate commit message marker, e.g. [C++/NF] into the first line of the
+commit message.
+Author:  Valentin Haenel <valentin.haenel@gmx.de>
+Licence: WTFPL http://en.wikipedia.org/wiki/WTFPL
+Usage: symlink the file to a .git/hooks directory
+$ cd .git/hooks
+$ ln -s ../../.github/hooks/prepare-commit-msg
+When committing, the script will interactively ask you for input using the
+prompt '?:'. You may then input one or more numbers, separated by space. The
+script will parse you input and construct the desired commit marker.
+For example:
+$ git co -b testing
+$ git commit -m "commit message"
+What kind of modification did you make?
+1: feat  -- new feature
+2: fix  -- bug fix
+3: enhancement  -- enhancement
+4: docs -- documentation
+5: style -- style/linting/etc
+6: refactor  -- refactor
+7: perf  -- performance
+8: test  -- test
+9: merge  -- merge
+?:5
+[testing da33f2f] [#345] style: commit message
+$ git log -1 --pretty="format:%s"
+[#345] style: commit message
+Although the example works with the '-m' flag for simplicity, the script also
+works when 'git commit' opens the editor of you choice. In this case the commit
+marker will already have been inserted and you must only write the message. This
+also gives you the chance to amend or modify the marker to you liking.  If you
+don't enter a number, the script will simply insert the empty string.
+If you wish to abort the commit when you have reached the editor, you have to
+delete the commit message marker and save an empty commit message. Vim users
+could use ':cq' to exit with a non-zero status, which will also abort the
+commit.
+"""
+
+import sys
+
+mod_type = [
+    ('feat', 'new feature'),
+    ('fix', 'bug fix'),
+    ('enhancement', 'enhancement'),
+    ('docs', 'documentation'),
+    ('style', 'style/linting/etc'),
+    ('refactor', 'refactor'),
+    ('perf', 'performance'),
+    ('test', 'test'),
+    ('merge', 'merge'),
+]
+
+mod_type = dict( (str(index+1), option)
+        for index, option in enumerate(mod_type))
+
+
+def print_and_read_issues():
+    # needed to run raw_input in git-hook
+    sys.stdin = open('/dev/tty')
+    try:
+        user_input = raw_input('?:')
+    except KeyboardInterrupt:
+        print "Canceled by user!"
+        sys.exit(1)
+    if not user_input.strip():
+        return ''
+    tokenized_input = user_input.split(' ')
+    return '/'.join(['#{}'.format(i) for i in tokenized_input])
+
+   
+
+def print_and_read_selection(option_dict):
+    for key, val in sorted(option_dict.items()):
+        print '%s: %s -- %s' % (key, val[0], val[1])
+    # needed to run raw_input in git-hook
+    sys.stdin = open('/dev/tty')
+    try:
+        user_input = raw_input('?:')
+    except KeyboardInterrupt:
+        print "Canceled by user!"
+        sys.exit(1)
+    if not user_input:
+        return ''
+    tokenized_input = user_input.split(' ')
+    try:
+        descriptors = [option_dict[i][0].rstrip()
+                for i in tokenized_input]
+    except KeyError:
+        print 'Fatal: number %s is invalid' % i
+        sys.exit(1)
+    else:
+        return '/'.join(descriptors)
+
+def get_marker_from_user():
+    output_list = ['[']
+    print '''Wich issues where your working at (only numbers separated by\
+ spaces if more than one)?'''
+    output_list.append(print_and_read_issues())
+    output_list.append('] ')
+    print 'What kind of modification did you make?'
+    output_list.append(print_and_read_selection(mod_type))
+    output_list.append(': ')
+    return ''.join(output_list)
+
+def prepend_to_file(marker):
+    with open(sys.argv[1], 'r') as message_file:
+        lines = message_file.readlines()
+        lines[0] = marker + lines[0]
+    with open(sys.argv[1], 'w') as message_file:
+        message_file.write(''.join(lines))
+
+if __name__ == '__main__':
+    prepend_to_file(get_marker_from_user())
