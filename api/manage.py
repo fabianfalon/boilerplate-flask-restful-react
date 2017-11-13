@@ -5,7 +5,7 @@
     Manager module
 """
 import logging
-import sys
+import sys, os
 import unittest
 import coverage
 from flask.ext.script import Manager
@@ -46,12 +46,30 @@ root.setLevel(logging.INFO)
 
 
 @manager.command
-def test():
+def test(coverage=False):
     """Runs the unit tests without test coverage."""
     tests = unittest.TestLoader().discover('api/tests', pattern='test*.py')
-    result = unittest.TextTestRunner(verbosity=2).run(tests)
-    if result.wasSuccessful():
+    # result = unittest.TextTestRunner(verbosity=2).run(tests)
+    import xmlrunner
+    # run tests with unittest-xml-reporting and output to $CIRCLE_TEST_REPORTS on CircleCI or test-reports locally
+    xmlrunner.XMLTestRunner(output=os.environ.get(
+        'CIRCLE_TEST_REPORTS', 'test-reports')).run(tests)
+
+    if coverage:
+        COV.stop()
+        COV.save()
+        print('Coverage Summary:')
+        COV.report()
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        covdir = os.path.join(basedir, 'tmp/coverage')
+        COV.html_report(directory=covdir)
+        print('HTML version: file://%s/index.html' % covdir)
+        COV.erase()
         return 0
+    else:
+        result = unittest.TextTestRunner(verbosity=2).run(tests)
+        if result.wasSuccessful():
+            return 0
     return 1
 
 

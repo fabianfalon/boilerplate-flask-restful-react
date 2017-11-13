@@ -95,3 +95,4 @@ Werkzeug==0.11.15
 WTForms==2.1
 xlrd==1.0.0
 xmltodict==0.10.2
+unittest-xml-reporting==2.1.0

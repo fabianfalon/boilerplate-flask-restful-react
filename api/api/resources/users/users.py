@@ -217,7 +217,10 @@ class RoleCollection(Resource):
         return roles.all()
 
 
-class RoleResource(Resource):
-
-    def get(self, role_id):
-        return {'hello': 'world'}
+from flask_restful import Resource
+class UserPingCollection(Resource):
+    def get(self):
+        response = dict()
+        response['message'] = 'pong'
+        response['status_code'] = 200
+        return response

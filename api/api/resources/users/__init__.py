@@ -8,4 +8,6 @@ resources = [
     ('users/me', MeResource, "users.me"),
     ('users/<int:user_id>', UserResource, "users.show_user"),
     ('users/roles', RoleCollection, "users.roles"),
+    ('users/ping', UserPingCollection, "users.ping"),
+
 ]

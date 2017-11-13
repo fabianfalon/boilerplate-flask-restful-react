@@ -5,3 +5,7 @@ api/settings/production_on
 
 env
 htmlcov
+test-reports/
+.coverage
+api/mtapi-falcon.log
+tmp/
