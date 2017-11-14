@@ -1,16 +1,19 @@
 import datetime
 
-
+from flask import current_app
 from api import db
 from api.models import User
 
+import hashlib
+import base64
+from api.db.syncdb import get_hmac
 
-def add_user(username, email, password, created_at=datetime.datetime.utcnow()):
+def add_user(email, first_name, last_name, password, role_id, created_at=datetime.datetime.utcnow()):
     user = User(
-        username=username,
         email=email,
-        password=password,
+        first_name=first_name, last_name=last_name,
+        active=True, role_id=role_id,
         created_at=created_at)
-    db.session.add(user)
-    db.session.commit()
+    user.password = get_hmac(password)
+    user.save()
     return user

@@ -133,7 +133,7 @@ class UserResource(Resource):
         user = User.query.filter_by(id=user_id).first()
         if user:
             # obtenemos los registros para el user
-            user_site_exists = UserSite.query.filter_by(
+            user_site_exists = User.query.filter_by(
                 user_id=user.id).all()
             if user_site_exists:
                 # borramos los registros del usuario
@@ -159,7 +159,7 @@ class UserResource(Resource):
             return response
 
     def put(self, user_id):
-
+        response = dict(data=[])
         if is_user_admin(g.user_id) is False:
             response['message'] = 'You do not have permission to update users'
             response['status_code'] = 401
@@ -171,10 +171,13 @@ class UserResource(Resource):
             return response
         user = User.query.get(user_id)
         before = json.dumps(user.to_json())
-        data = request.json['data']['data']
-        user.active = data['active']
-        user.first_name = data['first_name']
-        user.last_name = data['last_name']
+        data = request.json
+        if 'active' in data:
+            user.active = data['active']
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
         if 'role_id' in data:
             user.role_id = data['role_id']
         if 'new_password' in data:
@@ -182,9 +185,8 @@ class UserResource(Resource):
         db.session.add(user)
         db.session.commit()
         after = json.dumps(user.to_json())
-        response = make_response(
-            jsonify({'message': 'User has been successfully modified'}))
-        response.status_code = 200
+        response['message'] = 'User has been successfully modified'
+        response['status_code'] = 200
         logging.warning("""Se mofico el usuario: {},""".format(
             user_id))
         # Audit

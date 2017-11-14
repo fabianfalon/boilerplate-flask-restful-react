@@ -18,6 +18,8 @@ def generate_db_schema():
         logger.error(e)
         print(e)
 
+def drop_all():
+    BaseModel.metadata.drop_all(bind=db.engine)
 
 def generate_data():
     print "creando roles...."
@@ -26,10 +28,10 @@ def generate_data():
     role.save()
     print "creando usuarios...."
     user = User(
-        email='support@lala.com',
-        id=1, first_name=u'System', last_name="User",
+        email='fabian.falon@gmail.com',
+        id=1, first_name=u'fabian', last_name="falon",
         active=True, role_id=1)
-    user.password = get_hmac('system')
+    user.password = get_hmac('fabian')
     user.save()
     user = User(
         email='user1.user1@user.com',
